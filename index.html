@@ -1,91 +1,31 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Tu IP pública</title>
-  <style>
-    :root { color-scheme: light dark; }
-    body {
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-      margin: 0; padding: 2rem;
-      display: grid; place-items: center;
-      min-height: 100vh;
-      background: radial-gradient(1200px 600px at 10% 10%, #f0f4ff 0%, transparent 65%);
-    }
-    .card {
-      width: 100%; max-width: 640px;
-      border: 1px solid rgba(0,0,0,0.1);
-      border-radius: 16px;
-      padding: 1.5rem;
-      backdrop-filter: blur(6px);
-    }
-    h1 { margin: 0 0 0.25rem; font-size: 1.5rem; }
-    p { margin: 0.25rem 0 1rem; color: #555; }
-    .ip {
-      font-size: 2.25rem;
-      font-variant-numeric: tabular-nums;
-      letter-spacing: 0.02em;
-    }
-    .meta {
-      margin-top: 1rem;
-      font-size: 0.95rem;
-      color: #666;
-    }
-    button {
-      margin-top: 1rem;
-      padding: 0.6rem 1rem;
-      border-radius: 10px;
-      border: 1px solid rgba(0,0,0,0.12);
-      background: #fff;
-      cursor: pointer;
-    }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
-    .error { color: #b00020; margin-top: 0.5rem; }
-    code { background: rgba(0,0,0,0.06); padding: 0.2rem 0.35rem; border-radius: 6px; }
-  </style>
+  <meta charset="UTF-8">
+  <title>Registro de IPs</title>
 </head>
 <body>
-  <main class="card" role="main" aria-labelledby="title">
-    <h1 id="title">Tu dirección IP pública</h1>
-    <p>Esto muestra tu IP pública desde el navegador. No se guarda nada.</p>
-
-    <div class="ip" id="ip">Cargando…</div>
-    <div class="error" id="error" aria-live="polite"></div>
-
-    <button id="refresh" aria-label="Actualizar IP">Actualizar</button>
-
-    <div class="meta">
-      <p><strong>Nota:</strong> La IP "pública" puede estar detrás de NAT o un proxy. Para ver la IP del cliente y cabeceras como <code>X-Forwarded-For</code> necesitas un servidor.</p>
-    </div>
-  </main>
+  <h1>Bienvenido</h1>
+  <p>Tu IP pública es: <span id="ip">Cargando…</span></p>
 
   <script>
-    async function fetchIP() {
-      const ipEl = document.getElementById('ip');
-      const errEl = document.getElementById('error');
-      const btn = document.getElementById('refresh');
-
-      ipEl.textContent = 'Cargando…';
-      errEl.textContent = '';
-      btn.disabled = true;
-
+    async function logIP() {
       try {
-        // Usa ipify para obtener la IP pública en formato JSON
-        const res = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
-        if (!res.ok) throw new Error('No se pudo obtener la IP');
+        const res = await fetch('https://api.ipify.org?format=json');
         const data = await res.json();
-        ipEl.textContent = data.ip || 'No disponible';
-      } catch (e) {
-        ipEl.textContent = '—';
-        errEl.textContent = 'Error al obtener tu IP. Verifica tu conexión o bloqueadores.';
-      } finally {
-        btn.disabled = false;
+        document.getElementById('ip').textContent = data.ip;
+
+        // Enviar la IP a tu servidor
+        await fetch('https://TU-SERVIDOR/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ip: data.ip })
+        });
+      } catch (err) {
+        console.error('Error obteniendo la IP:', err);
       }
     }
-
-    document.getElementById('refresh').addEventListener('click', fetchIP);
-    fetchIP();
+    logIP();
   </script>
 </body>
 </html>
