@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CHI | Sistema Interactivo</title>
+
+<style>
+:root {
+  --bg-color: #0f0f0f;
+  --accent: #00ffcc;
+  --text: #f0f0f0;
+  --panel: #1e1e1e;
+  --font: 'Segoe UI', system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  background: linear-gradient(135deg, #0f0f0f, #1a1a1a);
+  color: var(--text);
+}
+
+header {
+  padding: 2rem;
+  text-align: center;
+  background: #111;
+  border-bottom: 2px solid var(--accent);
+}
+
+header h1 {
+  margin: 0;
+  font-size: 3rem;
+  color: var(--accent);
+}
+
+nav {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 1rem;
+}
+
+nav a {
+  color: var(--text);
+  text-decoration: none;
+}
+nav a:hover { color: var(--accent); }
+
+main {
+  max-width: 1100px;
+  margin: auto;
+  padding: 3rem 2rem;
+}
+
+section { margin-bottom: 4rem; }
+
+.panel {
+  background: var(--panel);
+  padding: 1.5rem;
+  border-left: 4px solid var(--accent);
+  margin-bottom: 1rem;
+  animation: fade 0.8s ease;
+}
+
+@keyframes fade {
+  from { opacity:0; transform:translateY(15px);}
+  to { opacity:1; transform:none;}
+}
+
+.console {
+  background: black;
+  color: #0f0;
+  font-family: monospace;
+  padding: 1rem;
+  border: 2px solid var(--accent);
+  height: 230px;
+  overflow-y: auto;
+}
+
+input.dev-input {
+  width: 100%;
+  padding: .5rem;
+  background: #111;
+  color: #0f0;
+  border: none;
+  font-family: monospace;
+}
+
+footer {
+  text-align: center;
+  padding: 2rem;
+  background: #111;
+  border-top: 2px solid var(--accent);
+}
+
+canvas {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+}
+</style>
+</head>
+
+<body>
+<canvas id="bg"></canvas>
+
+<header>
+<h1>CHI — Código con Alma</h1>
+
+<nav>
+<a href="#logros">Logros</a>
+<a href="#proyectos">Proyectos</a>
+<a href="#sobre">Sobre mí</a>
+<a href="#dev">Dev</a>
+</nav>
+
+<div style="margin-top:1rem">
+<select id="themeToggle">
+  <option value="dark">🌑 Oscuro</option>
+  <option value="light">☀️ Claro</option>
+</select>
+<span id="clock"></span>
+</div>
+</header>
+
+<main>
+
+<section id="logros">
+<h2>🏆 Logros</h2>
+<div id="logrosList"></div>
+</section>
+
+<section id="proyectos">
+<h2>🚀 Proyectos</h2>
+<div id="projectsGrid"></div>
+</section>
+
+<section id="sobre">
+<h2>🧠 Sobre mí</h2>
+<div class="panel">
+<p>CHI no es solo código. Es curiosidad, pruebas, errores y obsesión por crear experiencias interactivas.</p>
+<p><b>Nivel:</b> <span id="nivel"></span> | <b>XP:</b> <span id="xp"></span></p>
+</div>
+</section>
+
+<section id="dev">
+<h2>💻 Modo Desarrollador</h2>
+<div class="console" id="console">[CHI@dev]$ Sistema iniciado</div>
+<input class="dev-input" placeholder="comando..." />
+</section>
+
+</main>
+
+<footer>
+© 2025 CHI | Build interactivo
+</footer>
+
+<script>
+/* ================= CANVAS ================= */
+const canvas = document.getElementById("bg");
+const ctx = canvas.getContext("2d");
+resize();
+window.onresize = resize;
+
+let particles = Array.from({length:120},()=>({
+  x:Math.random()*innerWidth,
+  y:Math.random()*innerHeight,
+  vx:(Math.random()-.5)*1.2,
+  vy:(Math.random()-.5)*1.2,
+  r:Math.random()*2+1
+}));
+
+function resize(){
+  canvas.width=innerWidth;
+  canvas.height=innerHeight;
+}
+
+(function animate(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  particles.forEach(p=>{
+    p.x+=p.vx; p.y+=p.vy;
+    if(p.x<0||p.x>canvas.width) p.vx*=-1;
+    if(p.y<0||p.y>canvas.height) p.vy*=-1;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle="rgba(0,255,204,.6)";
+    ctx.fill();
+  });
+  requestAnimationFrame(animate);
+})();
+
+/* ================= CLOCK ================= */
+setInterval(()=>{
+  document.getElementById("clock").textContent =
+    new Date().toLocaleTimeString();
+},1000);
+
+/* ================= XP ================= */
+let xp = +localStorage.getItem("xp") || 0;
+function level(){ return Math.floor(xp/100)+1; }
+function addXP(v){
+  xp+=v;
+  localStorage.setItem("xp",xp);
+  updateStats();
+}
+function updateStats(){
+  nivel.textContent = level();
+  xpEl.textContent = xp;
+}
+const nivel = document.getElementById("nivel");
+const xpEl = document.getElementById("xp");
+updateStats();
+
+/* ================= LOGROS ================= */
+const logros = [
+{id:"inicio", txt:"🔥 Sistema iniciado"},
+{id:"dev", txt:"💻 Usaste la consola"},
+{id:"secreto", txt:"🕹️ Código secreto"}
+];
+
+const list = document.getElementById("logrosList");
+function unlock(id){
+  localStorage.setItem("logro_"+id,1);
+  renderLogros();
+  addXP(50);
+  log("LOGRO desbloqueado: "+id);
+}
+function renderLogros(){
+  list.innerHTML="";
+  logros.forEach(l=>{
+    if(localStorage.getItem("logro_"+l.id)){
+      const d=document.createElement("div");
+      d.className="panel";
+      d.textContent=l.txt;
+      list.appendChild(d);
+    }
+  });
+}
+unlock("inicio");
+
+/* ================= PROYECTOS ================= */
+const projects=[
+{t:"Terminal JS",d:"CLI web interactiva"},
+{t:"Sistema XP",d:"Progresión persistente"},
+{t:"Canvas Engine",d:"Partículas animadas"}
+];
+
+const grid=document.getElementById("projectsGrid");
+grid.style.display="grid";
+grid.style.gridTemplateColumns="repeat(auto-fit,minmax(250px,1fr))";
+grid.style.gap="1rem";
+
+projects.forEach(p=>{
+  const c=document.createElement("div");
+  c.className="panel";
+  c.innerHTML=`<h3>${p.t}</h3><p>${p.d}</p>`;
+  grid.appendChild(c);
+});
+
+/* ================= CONSOLA ================= */
+const consoleEl=document.getElementById("console");
+const input=document.querySelector(".dev-input");
+
+function log(msg){
+  consoleEl.innerHTML+=`<br>[CHI@dev]$ ${msg}`;
+  consoleEl.scrollTop=consoleEl.scrollHeight;
+}
+
+const cmds={
+  help:()=> "help, clear, xp, nivel, secret",
+  clear:()=> consoleEl.innerHTML="[CHI@dev]$ limpia",
+  xp:()=> "XP: "+xp,
+  nivel:()=> "Nivel: "+level(),
+  secret:()=> unlock("secreto")
+};
+
+input.addEventListener("keydown",e=>{
+  if(e.key==="Enter"){
+    const c=input.value;
+    log(c);
+    if(cmds[c]) log(cmds[c]());
+    else log("comando desconocido");
+    unlock("dev");
+    addXP(10);
+    input.value="";
+  }
+});
+
+/* ================= THEME ================= */
+const toggle=document.getElementById("themeToggle");
+toggle.value=localStorage.getItem("theme")||"dark";
+
+function setTheme(t){
+  if(t==="light"){
+    document.documentElement.style.setProperty("--bg-color","#fff");
+    document.documentElement.style.setProperty("--text","#111");
+    document.documentElement.style.setProperty("--accent","#007acc");
+    document.body.style.background="#fff";
+  } else {
+    document.body.style.background="linear-gradient(135deg,#0f0f0f,#1a1a1a)";
+  }
+  localStorage.setItem("theme",t);
+}
+setTheme(toggle.value);
+toggle.onchange=e=>setTheme(e.target.value);
+</script>
+
+</body>
+</html>
